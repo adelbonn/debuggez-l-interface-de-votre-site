@@ -2,10 +2,24 @@ const $sensorsWrapper = document.querySelector('.sensors-wrapper')
 
 const ITEMS_PER_PAGE = 8
 
-const retrieveSensorsData = () => fetch('/data/homepage-data.json')
-    .then(res => res.json())
-    .then(data => data.facades)
-    .catch(err => console.log("Oh no", err))
+const retrieveSensorsData = () => fetch('../data/homepage-data.json')
+    .then(res =>  {
+        if (!res.ok) {
+            throw new Error(`HTTP error: ${res.statusText} ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (!data || !data.facades) {
+            throw new Error ('Data structure is invalid');
+        } 
+        return data.facades;
+    })
+    .catch(err => {
+        console.error('Error loading data', err);
+        return [];
+    });
+    
 
 
 const createSensorCardImg = sensor => {
@@ -13,7 +27,7 @@ const createSensorCardImg = sensor => {
 
     $sensorImg.classList.add('sensor-img')
 
-    $sensorImg.setAttribute('src', `/assets/${sensor.img}`)
+    $sensorImg.setAttribute('src', `../assets/${sensor.img}`)
     $sensorImg.setAttribute('alt', `Capteur numéro ${sensor.id}`)
 
     return $sensorImg
@@ -40,7 +54,7 @@ const createSensorCardInfo = sensor => {
     
     const $sensorInfoBtn = document.createElement('a')
     $sensorInfoBtn.classList.add('sensor-info-btn')
-    $sensorInfoBtn.setAttribute('href', `/pages/sensor-details.html?facadeId=${sensor.id}`)
+    $sensorInfoBtn.setAttribute('href', `./sensor-details.html?facadeId=${sensor.id}`)
     $sensorInfoBtn.textContent = 'Voir les détails'
 
 

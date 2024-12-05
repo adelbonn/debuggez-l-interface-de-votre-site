@@ -22,11 +22,23 @@ const $weatherCloudcover = document.querySelector('.weather-cloudcover')
 const $weatherUVIndex = document.querySelector('.weather-uv-index')
 const $weatherIsDay = document.querySelector('.weather-is-day')
 
-const retrieveSensorData = () => fetch('/data/facade-detail-data.json')
-    .then(res => res.json())
-    .then(data => data.facade)
-    .catch(err => console.log("Oh no", err))
-
+const retrieveSensorData = () => fetch('../data/facade-detail-data.json')
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error: ${res.statusText} ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (!data || !data.facade) {
+            throw new Error('Data structure is invalid');
+        }
+        return data.facade;
+    })
+    .catch(err => {
+        console.error("Error loading sensor data:", err);
+        return null;
+    });
 
 const fillSensorTable = sensorData => {
     $sensorId.textContent = sensorData.id
@@ -60,24 +72,35 @@ const fillWeatherForecastTable = weatherForecastData => {
     $weatherUVIndex.textContent = weatherForecastData.current.uv_index
     $weatherIsDay.textContent = weatherForecastData.current.is_day === 'yes' ? 'Jour' : 'Nuit'
 
-}
+
 
 
 const handleSensorImagesGallery = sensorData => {
     // By default take the first element of the array
-    $sensorMainImg.setAttribute('src', `/assets/${sensorData.medias[0]}`)
+    $sensorMainImg.setAttribute('src', `../../assets/${sensorData.medias[0]}`)
 }
 
 
 const main = async () => {
-    const sensorData = await retrieveSensorData()
+    const sensorData = await retrieveSensorData();
+    
+    if (!sensorData) {
+        console.error('No sensor data available');
+        return;
+    }
 
-    const weatherForecastData = await retrieveWeatherForecastData(sensorData.coordinates, true)
+    try {
+        const weatherForecastData = await retrieveWeatherForecastData(sensorData.coordinates, true);
 
-    fillSensorTable(sensorData)
-    handleSensorImagesGallery(sensorData)
+        fillSensorTable(sensorData);
+        handleSensorImagesGallery(sensorData);
 
-    fillWeatherForecastTable(weatherForecastData)
-}
+        if (weatherForecastData) {
+            fillWeatherForecastTable(weatherForecastData);
+        }
+    } catch (error) {
+        console.error('Error in main:', error);
+    }
+};
 
 main()
